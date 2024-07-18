@@ -8,33 +8,38 @@ class Queries_NW{
 
     char*       subjectData          = nullptr;
 
-    long        allocatedQuerySize,
-                querySize,
-                allocatedSubjectSize,
-                scaffoldCount,
-                subjectSize,
-                hits;
+    long        allocatedQuerySize   = 100,
+                querySize            = 0,
+                allocatedSubjectSize = 100,
+                scaffoldCount        = 0,
+                subjectSize          = 0,
+                hits                 = 0;
 
-    const long  MAX_FRAGMENTS,
-                MAX_SCAFFOLDS;
+    const long  MAX_FRAGMENTS        = 125000000,
+                MAX_SCAFFOLDS        = 607;
 
-    const int   FRAGMENT_SIZE;
+    const int   FRAGMENT_SIZE        = 33;
 
-    int         mismatchMax,
-                matchScore           =  2,
+    int         mismatchMax          = 2,
+                matchScore           = 2,
                 mismatchScore        = -1,
-                gapPenalty           = -1,
-                hits                 =  0;
+                gapPenalty           = -1;
 
     // constructor function
 
 
     // NW function to compare two n-mer squences, returning similarity score of the best alignment
     int neddleman_Wunsch( string oneString, string queryString){
+        
+        // cout << "In NW function\n";
+        // cout << "Test string (oneString) : " << oneString << endl;
+        // cout << "queryString             : " << queryString << endl;
+        
+        
         // going to be using a scoring matrix to determine simularity score
         int rowSize = oneString.length() + 1, 
             colSize = queryString.length() + 1, 
-            row, col, prevValue = 0,
+            row, col,
             match, mismatch, gapLeft, gapUp, numOfMis = 0,
             gapPenalty =-1, matchScore = 2, mismatchScore=-1;
 
@@ -93,9 +98,6 @@ class Queries_NW{
                     // set to which is higher
                     if( mismatch >= gapLeft && mismatch >= gapUp){
                         scoreMatrix[row][col] = mismatch;
-
-                        // increment mismatch counter
-                        numOfMis++;
                     }
                     else if( gapLeft >= gapUp){
                         scoreMatrix[row][col] = gapLeft;
@@ -104,11 +106,6 @@ class Queries_NW{
                         scoreMatrix[row][col] = gapUp;
                     }
 
-                    // if mismatch counter is > 2 return failure
-                    if( numOfMis > 2){
-                        // return failure
-                        return 0;
-                    }
                 }
             }
 
@@ -135,7 +132,12 @@ class Queries_NW{
         //     std::cout << std::endl;
         // }
 
-        return scoreMatrix[row-1][col-1];
+        if( scoreMatrix[row-1][col-1] >= ((rowSize * matchScore) -2)){
+            return 1;
+        }
+
+
+        return 0;
     }
 
 
@@ -144,12 +146,23 @@ class Queries_NW{
     void search_NW(bool isQuery, long searchMax){
         long index, counter=0, subjectIndex, queryIndex;
         string testStr="";
+        time_t stop_Watch = 0;
 
+
+        cerr << "Entered search function\n";
+        time(&stop_Watch);
+        cerr << "Entered Search function at: " << ctime(&stop_Watch) << endl;
         // START TIMER HERE
 
         
         // loop through until hitting the search max
         while(counter < searchMax){
+            
+            cerr << "on iteration: " << counter << endl;
+            time(&stop_Watch);
+            cerr << "   at: " << ctime(&stop_Watch) << endl;
+            
+            
             // check for subproblem a
             if(isQuery){
                 // randomly pick an index in the subject dataset
@@ -178,6 +191,8 @@ class Queries_NW{
 
             // rest the test string
             testStr="";
+            
+            counter++;
         }
 
 
@@ -223,7 +238,7 @@ class Queries_NW{
         ifstream file(file_Name);
         string currentLine;
         int queryNum = 0;
-        time_t stop_Watch = 0;
+        //time_t stop_Watch = 0;
         
         // check if the file can be opened
         if (!file.is_open()) {
@@ -306,7 +321,7 @@ class Queries_NW{
         string tempGenome = "";
         long prevSize;
         unsigned long index;
-        time_t stop_Watch = 0;
+        //time_t stop_Watch = 0;
 
         // check if the file can be opened
         if (!file.is_open()) {
@@ -460,7 +475,7 @@ class Queries_BL{
         ifstream file(file_Name);
         string currentLine;
         int queryNum = 0;
-        time_t stop_Watch = 0;
+        //time_t stop_Watch = 0;
         
         // check if the file can be opened
         if (!file.is_open()) {
@@ -543,7 +558,7 @@ class Queries_BL{
         string tempGenome = "";
         long prevSize;
         unsigned long index;
-        time_t stop_Watch = 0;
+        //time_t stop_Watch = 0;
 
         // check if the file can be opened
         if (!file.is_open()) {
@@ -686,17 +701,21 @@ int main(int argc, char* argv[]){
 
     // check if the program has the appropriate number of parameter
     // create error handler for no input file argument
-    if( argc != 5 ){
+    if( argc < 5 ){
         cout << "Error please input the correct command in\n Program End";
         return 1;
     }
 
 
     // check for problem A or B
-
+    cout << "Argv 1 = " << argv[1] << endl;
+    cout << "Argv 2 = " << argv[2] << endl;
+    cout << "Argv 3 = " << argv[3] << endl;
+    cout << "Argv 4 = " << argv[4] << endl;
+    cout << "Argv 5 = " << argv[5] << endl;
 
     // if problem A then read data and work in the Queries_NW class
-    if(*argv[3] == 'A'){
+    if(strcmp(argv[4], "1") == 0){
         // read query data in
         if(problemA.read_Qurey(argv[2])){
             cout << "Successful read query completion" << endl;
@@ -721,13 +740,19 @@ int main(int argc, char* argv[]){
         cout << "Search start at: " << ctime(&stop_Watch) << endl;
 
         // check for search A
-        if( *argv[5] == 1){
-            problemA.search_NW(true, *argv[4]);
+        if( strcmp(argv[5], "A") == 0){
+            
+            cout << "Sub problem A selected\n";
+            
+            problemA.search_NW(true, stoi(argv[3]));
         }
             
         // otherwise assume search B
-        else if( *argv[5] == 2){
-            problemA.search_NW(false, *argv[4]);
+        else if( strcmp(argv[5], "B") == 0){
+            
+            cout << "Sub problem B slelected\n";
+            
+            problemA.search_NW(false, stoi(argv[3]));
         }
             
         time(&stop_Watch);
@@ -746,7 +771,7 @@ int main(int argc, char* argv[]){
 
 
     // otherwise read data and work in the Queries_BL class
-    else if( *argv[3] == 'B'){
+    else if( strcmp(argv[3], "2") == 0){
 
         // read query data in
 
