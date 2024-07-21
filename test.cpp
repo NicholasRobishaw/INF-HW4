@@ -14,7 +14,7 @@ string random_Fragment_Str( int size);
 
 int main(){
 
-    int test = neddleman_Wunsch("GATTACA", "GTCGACGCA\0");
+    int test = neddleman_Wunsch("CNGTCGACGTN", "CNGTCGACGCA");
 
     cout << "\nSimularity Score: " << test;
 
@@ -117,6 +117,7 @@ int neddleman_Wunsch( string oneString, string otherString){
             }
         }
 
+
     }
 
     
@@ -140,5 +141,14 @@ int neddleman_Wunsch( string oneString, string otherString){
         std::cout << std::endl;
     }
 
+    cout << "Mismatch floor for up to 2: " << (oneString.length() * matchScore) - abs(3 * matchScore) << endl;
+
+    if( scoreMatrix[row-1][col-1] >= (oneString.length() * matchScore) - abs(3 * matchScore)){
+        cout << "we have a hit\n";
+    }
+
+    else{
+        cout << "We have a miss\n";
+    }
     return scoreMatrix[row-1][col-1];
 }
